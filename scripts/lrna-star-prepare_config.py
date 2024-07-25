@@ -65,15 +65,18 @@ if diffexp_flag:
         print('Differential expression enabled but contrasts do not exist, exiting')
         sys.exit()
 
-# recipe specific
 DATA_PATH = job_data['service_data']
 reference_dict = {
     '9606.33': {
-        'fasta': '/home/ac.cucinell/LUCID/RNASeq/Genome/GRCh38.p14/GCF_000001405.40_GRCh38.p14_genomic.fna',
-        'gff': '/home/ac.cucinell/LUCID/RNASeq/Genome/GRCh38.p14/GCF_000001405.40_GRCh38.p14_genomic.gff',
-        'gtf': '/home/ac.cucinell/LUCID/RNASeq/Genome/GRCh38.p14/GCF_000001405.40_GRCh38.p14_genomic.gtf'        
+        'fasta': os.path.join(DATA_PATH,'GRCh38.p14/GCF_000001405.40_GRCh38.p14_genomic.fna'),
+        'gff': os.path.join(DATA_PATH,'GRCh38.p14/GCF_000001405.40_GRCh38.p14_genomic.gff'),
+        'gtf': os.path.join(DATA_PATH,'GRCh38.p14/GCF_000001405.40_GRCh38.p14_genomic.gtf')        
     }
 }
+
+# recipe specific
+if config['recipe'] == 'lucid_star':
+    job_data['star_index'] = os.path.join(DATA_PATH,'GRCh38_Refseq_Star')
 
 job_data = merge_jsons(job_data,reference_dict[job_data['reference_genome_id']])
 modify_sample_libs(job_data)
