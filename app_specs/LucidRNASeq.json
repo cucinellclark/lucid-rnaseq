@@ -1,0 +1,133 @@
+{
+  "id": "LucidRNASeq",
+  "label": "LUCID RNASeq",
+  "script": "App-LucidRNASeq",
+  "description": "Transcriptomic pipeline for the LUCID project",
+    "default_memory": "50G",
+    "default_cpu": 2,
+    "default_runtime": 36000,
+  "parameters": [
+    {
+      "id": "output_path",
+      "label": "Output Folder",
+      "required": 1,
+      "default": null,
+      "desc": "Path to which the output will be written. Defaults to the directory containing the input data. ",
+      "type": "folder"
+    },
+    {
+      "id": "output_file",
+      "label": "File Basename",
+      "required": 1,
+      "default": null,
+      "desc": "Basename for the generated output files. Defaults to the basename of the input data.",
+      "type": "wsid"
+    },
+    {
+        "id": "paired_end_libs",
+        "label": "paired reads library",
+        "allow_multiple": true,
+        "required": 0,
+        "default": [],
+        "type": "group",
+        "group": [
+            {
+                "id": "sample_id",
+                "required": 1,
+                "label": "id for the sample",
+                "desc": "Sample Id that will be used for filenames",
+                "default": "sample",
+                "type": "string"
+            },
+            {
+                "id": "read1",
+                "required": 1,
+                "label": "Read file 1",
+                "desc": "Read file in FASTQ, FASTA",
+                "wstype": "ReadFile",
+                "type": "wstype"
+            },
+            {
+                "id": "read2",
+                "required": 1,
+                "label": "Read file 2",
+                "desc": "Read file in FASTQ, FASTA",
+                "wstype": "ReadFile",
+                "type": "wstype"
+            },
+            {
+                "id": "condition",
+                "label": "Experimental condition",
+                "required": 1,
+                "default": "none",
+                "type": "string"
+            }
+        ]
+    },
+    {
+        "id": "single_end_libs",
+        "label": "single reads library",
+        "allow_multiple": true,
+        "required": 0,
+        "default": [],
+        "type": "group",
+        "group": [
+            {
+                "id": "sample_id",
+                "required": 1,
+                "label": "id for the sample",
+                "desc": "Sample Id that will be used for filenames",
+                "default": "sample",
+                "type": "string"
+            },
+            {
+                "id": "read",
+                "required": 1,
+                "label": "Read file",
+                "desc": "Read file in FASTQ, FASTA",
+                "wstype": "ReadFile",
+                "type": "wstype"
+            },
+            {
+                "id": "condition",
+                "label": "Experimental condition",
+                "required": 1,
+                "default": "none",
+                "type": "string"
+            }
+        ]
+    },
+    {
+        "id": "reference_genome_id",
+        "required": 1,
+        "default": "9606.33",
+        "label": "Reference genome ID",
+        "desc": "Reference genome ID",
+        "type": "string"
+    },
+    {
+        "id": "recipe",
+        "label": "RNASeq recipe",
+        "required": 1,
+        "default": "lucid_star",
+        "desc": "Recipe used for RNASeq analysis",
+        "type": "enum",
+        "enum": ["lucid_star"]
+    },
+    {
+        "id": "experimental_conditions",
+        "label": "Experimental conditions",
+        "allow_multiple": true,
+        "required": 0,
+        "default": null,
+        "type": "string"
+    },
+    {
+        "id": "contrasts",
+        "label": "Contrast list",
+        "required": 0,
+        "default": null,
+        "type": "string"
+    }
+  ]
+}

@@ -1,0 +1,8 @@
+package Bio::P3::LucidRNASeq::AppConfig;
+
+use constant    lrna_service_data   => '[% lrna_service_data %]';
+
+use base 'Exporter';
+our @EXPORT_OK = qw(lrna_service_data);
+our %EXPORT_TAGS = (all => [@EXPORT_OK]);
+1;
