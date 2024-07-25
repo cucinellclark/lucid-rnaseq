@@ -1,0 +1,60 @@
+import re
+import os
+import pandas as pd
+from pydeseq2.dds import DeseqDataSet
+from pydeseq2.default_inference import DefaultInference
+from pydeseq2.ds import DeseqStats
+
+sample_id_list = []
+for sample_id in config['single_end_libs']:
+    sample_id_list.append(sample_id)
+for sample_id in config['paired_end_libs']:
+    sample_id_list.append(sample_id)
+
+wildcard_constraints:
+    sample_id= '|'.join([re.escape(x) for x in sample_id_list])
+
+contrast_data = pd.read_csv("deseq_contrasts_table.txt",sep='\t')
+output_files = contrast_data.Output.tolist()
+
+rule all:
+    input:
+        "metadata.txt",
+        expand("{of}",of=output_files)
+
+rule create_metadata_file:
+    input:
+    output:
+        meta_file = "metadata.txt"
+    params:
+        single_libs = config['single_end_libs'],
+        paired_libs = config['paired_end_libs'] 
+    run:
+        reads_libs = list(params.single_libs.values()) + list(params.paired_libs.values())                
+        with open(output.meta_file,'w') as o:
+            o.write("Sample\tCondition\n")
+            for read_obj in reads_libs:
+                o.write(f"{read_obj['sample_id']}\t{read_obj['condition']}\n")
+
+rule run_deseq:
+    input:
+        counts="results/counts_table.txt",
+        meta="metadata.txt"
+    output:
+        diff_file="{of}"
+    threads:4
+    run:
+        for idx, row in contrast_data.iterrows():
+            output_diff = row['Output']
+            if output_diff == output.diff_file:
+                counts = pd.read_csv(str(input.counts), sep='\t', index_col=0).T
+                metadata = pd.read_csv(str(input.meta), sep='\t', index_col=0)
+                
+                inference = DefaultInference(n_cpus=1)
+                dds = DeseqDataSet(counts=counts,metadata=metadata,design_factors='Condition',refit_cooks=True,inference=inference)
+                dds.deseq2()
+
+                stat_res = DeseqStats(dds, inference=inference, contrast=['Condition',row['Cond1'],row['Cond2']])
+                stat_res.summary()
+                stat_res.results_df.to_csv(output.diff_file,sep='\t')
+

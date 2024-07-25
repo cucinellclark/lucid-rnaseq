@@ -1,0 +1,51 @@
+import re
+import os
+
+sample_id_list = []
+#for sample_id in config['single_end_libs']:
+#    sample_id_list.append(sample_id)
+for sample_id in config['paired_end_libs']:
+    sample_id_list.append(sample_id)
+
+wildcard_constraints:
+    sample_id= '|'.join([re.escape(x) for x in sample_id_list])
+
+rule all:
+    input:
+        tpm_output = expand("tpm_calculator/{sample_id}_Aligned.sortedByCoord.out_genes.out", sample_id=sample_id_list),
+        counts_file = "results/counts_paired.txt"
+
+### Abundance estimation with featureCounts
+rule featureCounts:
+    input:
+        aligned_reads = expand("aligned/{sample_id}_Aligned.sortedByCoord.out.bam",sample_id=sample_id_list)
+    output:
+        counts_file = "results/counts_paired.txt"
+    params:
+        gtf = config['gtf']
+    threads: 4
+    shell:
+        """
+        featureCounts -T {threads} -p -t exon -g gene_id -a {params.gtf} -o {output.counts_file} {input.aligned_reads}
+        """
+
+### TPM Calulation with tpmcalculator
+rule tpm_calculator:
+    input:
+        bam="aligned/{sample_id}_Aligned.sortedByCoord.out.bam",
+        gtf=config["gtf"]
+    output:
+        tpm="tpm_calculator/{sample_id}_Aligned.sortedByCoord.out_genes.out"
+    log:
+        "logs/{sample_id}_tpmcalculator.log"
+    shell:
+        """
+        if [ ! -d tpm_calculator ]
+        then
+            mkdir tpm_calculator
+        fi
+        cd tpm_calculator
+        TPMCalculator -g {input.gtf} -p -b ../{input.bam} -e -a > ../{log} 2>&1
+        cd ..
+        """
+

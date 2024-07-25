@@ -1,0 +1,103 @@
+import os
+import re
+
+sample_id_list = []
+for sample_id in config['single_end_libs']:
+    sample_id_list.append(sample_id)
+for sample_id in config['paired_end_libs']:
+    sample_id_list.append(sample_id)
+
+wildcard_constraints:
+    sample_id= '|'.join([re.escape(x) for x in sample_id_list])
+
+rule all:
+    input:
+        counts_table = "results/counts_table.txt",
+        tpms_table = "results/tpms.txt",
+        heatmap = 'results/tpm_heatmap.png'
+
+rule create_counts_table:
+    input:
+    output:
+        counts_table = "results/counts_table.txt"
+    params:
+        counts_single = "results/counts_single.txt",
+        counts_paired = "results/counts_paired.txt"
+    run:
+        import pandas as pd
+        import io
+        data_single = None 
+        data_paired = None
+        if os.path.exists(params.counts_single):
+            with open(params.counts_single,'r') as cs:
+                cs_text = cs.readlines()
+                # skip comment line
+                cs_text = cs_text[1:]
+                data_single = pd.read_csv(io.StringIO('\n'.join(cs_text)),sep='\t')
+        if os.path.exists(params.counts_paired):
+            with open(params.counts_paired,'r') as cp:
+                cp_text = cp.readlines()
+                # skip comment line
+                cp_text = cp_text[1:]
+                data_paired = pd.read_csv(io.StringIO('\n'.join(cp_text)),sep='\t')
+        if not data_single is None and not data_paired is None:
+            data = pd.merge(data_single,data_paired,on='Gene',how='outer').fillna('0')
+        elif not data_single is None:
+            data = data_single       
+        elif not data_paired is None:
+            data = data_paired
+        else:
+            data = None
+        data.drop(['Chr','Start','End','Strand','Length'],axis=1,inplace=True)
+        data_cols = ['Gene']
+        for colname in data.columns.tolist()[1:]: 
+            scol = os.path.basename(colname).replace("_Aligned.sortedByCoord.out.bam","")
+            data_cols.append(scol)
+        data.columns = data_cols
+        data.to_csv('results/counts_table.txt',sep='\t',index=None)
+           
+rule create_tpm_table:
+    input:
+        tpm_files = expand("tpm_calculator/{sample_id}_Aligned.sortedByCoord.out_genes.out",sample_id=sample_id_list)
+    output:
+        tpm_table = "results/tpms.txt"
+    run:
+        import pandas as pd
+        data_dict = {}
+        sid_list = []
+        for tf in input.tpm_files:
+            sid = os.path.basename(tf).replace("_Aligned.sortedByCoord.out_genes.out","")
+            sid_list.append(sid)
+            data = pd.read_csv(tf,sep='\t')
+            genes = data['Gene_Id'].tolist()
+            tpms = data['TPM'].tolist()
+            for idx,g in enumerate(genes):
+                if g not in data_dict:
+                    data_dict[g] = {}
+                data_dict[g][sid] = tpms[idx]
+        with open(output.tpm_table,'w') as o:
+            o.write('Gene\t{}\n'.format("\t".join(sid_list)))
+            for gene in data_dict:
+                o.write(gene)
+                for sid in sid_list:
+                    if sid in data_dict[gene]:
+                        o.write(f"\t{data_dict[gene][sid]}")
+                    else:
+                        o.write("\t0")
+                o.write('\n')
+
+rule create_tpm_cluster_heatmap:
+    input:
+        tpm_file = 'results/tpms.txt'
+    output:
+        heatmap = 'results/tpm_heatmap.png'
+    run:
+        import seaborn as sns
+        import pandas as pd
+        
+        tpm_data = pd.read_csv('results/tpms.txt',sep='\t')
+        tpm_data.index = tpm_data.Gene.tolist()
+        tpm_data.drop(['Gene'],axis=1,inplace=True)
+        tpm_data = tpm_data.loc[(tpm_data!=0).any(axis=1)]
+        fig = sns.clustermap(tpm_data,figsize=(7,7))
+        fig.savefig(output.heatmap)

@@ -1,0 +1,35 @@
+import re
+import os
+import json
+import pandas as pd
+import subprocess
+
+sample_id_list = []
+for sample_id in config['single_end_libs']:
+    sample_id_list.append(sample_id)
+for sample_id in config['paired_end_libs']:
+    sample_id_list.append(sample_id)
+
+wildcard_constraints:
+    sample_id= '|'.join([re.escape(x) for x in sample_id_list])
+
+contrast_data = pd.read_csv("cuffdiff_contrasts_table.txt",sep='\t')
+output_files = contrast_data.Output.tolist()
+
+rule all:
+    input:
+        expand("{of}/gene_exp.diff",of=output_files)
+
+rule run_cuffdiff:
+    input:
+        gtf=config['gtf']
+    output:
+        diff_file="{of}/gene_exp.diff"
+    run:
+        for idx, row in contrast_data.iterrows():
+            output_diff = row['Output']            
+            if os.path.dirname(output.diff_file) == output_diff:
+                cuffdiff_cmd = ["cuffdiff","-o",output_diff,"-L",row['Cond2']+','+row['Cond1'],'-p','6','--library-type','fr-unstranded',input.gtf,row['Bams2'],row['Bams1']]            
+                print(cuffdiff_cmd)
+                subprocess.check_call(cuffdiff_cmd)
+

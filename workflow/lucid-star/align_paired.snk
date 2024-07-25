@@ -1,0 +1,40 @@
+import re
+import os
+
+sample_id_list = []
+print(config)
+for sample_id in config['paired_end_libs']:
+    sample_id_list.append(sample_id)
+
+wildcard_constraints:
+    sample_id= '|'.join([re.escape(x) for x in sample_id_list])
+
+rule all:
+    input:
+        bam_files = expand("aligned/{sample_id}_Aligned.sortedByCoord.out.bam", sample_id=sample_id_list),
+        bai_files = expand("aligned/{sample_id}_Aligned.sortedByCoord.out.bam.bai", sample_id=sample_id_list) 
+
+### STAR alignment and bam file indexing
+rule align_reads:
+    input:
+    output:
+        aligned_read = 'aligned/{sample_id}_Aligned.sortedByCoord.out.bam'
+    params:
+        index = config['star_index'],
+        read1 = lambda wildcards: config['paired_end_libs'][wildcards.sample_id]['read1'],
+        read2 = lambda wildcards: config['paired_end_libs'][wildcards.sample_id]['read2']
+    threads: 4
+    shell:
+        """
+        STAR --runThreadN {threads} --genomeDir {params.index} --readFilesCommand zcat --readFilesIn {params.read1} {params.read2} --outSAMstrandField intronMotif --outFileNamePrefix aligned/{wildcards.sample_id}_ --outSAMtype BAM SortedByCoordinate --outReadsUnmapped Fastx 
+        """
+
+rule index_bam:
+    input:
+        bam = "aligned/{sample}_Aligned.sortedByCoord.out.bam"
+    output:
+        bai = "aligned/{sample}_Aligned.sortedByCoord.out.bam.bai"
+    shell:
+        """
+        samtools index {input.bam}
+        """

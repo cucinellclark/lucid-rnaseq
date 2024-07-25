@@ -1,0 +1,107 @@
+import re
+import os
+
+sample_id_list = []
+print(config)
+for sample_id in config['single_end_libs']:
+    sample_id_list.append(sample_id)
+
+wildcard_constraints:
+    sample_id= '|'.join([re.escape(x) for x in sample_id_list])
+
+rule all:
+    input:
+        bam_files = expand("aligned/{sample_id}_Aligned.sortedByCoord.out.bam", sample_id=sample_id_list),
+        bai_files = expand("aligned/{sample_id}_Aligned.sortedByCoord.out.bam.bai", sample_id=sample_id_list), 
+        tpm_output = expand("tpm_calculator/{sample_id}_Aligned.sortedByCoord.out_genes.out", sample_id=sample_id_list),
+        counts_table = "results/counts.txt",
+        tpms_table = "results/tpms.txt"
+
+### STAR alignment and bam file indexing
+rule align_reads:
+    input:
+    output:
+        aligned_read = 'aligned/{sample_id}_Aligned.sortedByCoord.out.bam'
+    params:
+        index = config['star_index'],
+        read = lambda wildcards: config['single_end_libs'][wildcards.sample_id]['read']
+    threads: 4
+    shell:
+        """
+        STAR --runThreadN {threads} --genomeDir {params.index} --readFilesIn {params.read} --outSAMstrandField intronMotif --outFileNamePrefix aligned/{wildcards.sample_id}_ --outSAMtype BAM SortedByCoordinate
+        """
+
+rule index_bam:
+    input:
+        bam = "aligned/{sample}_Aligned.sortedByCoord.out.bam"
+    output:
+        bai = "aligned/{sample}_Aligned.sortedByCoord.out.bam.bai"
+    shell:
+        """
+        samtools index {input.bam}
+        """
+
+### Abundance estimation with featureCounts
+rule featureCounts:
+    input:
+        aligned_reads = expand("aligned/{sample_id}_Aligned.sortedByCoord.out.bam",sample_id=sample_id_list)
+    output:
+        counts_file = "results/counts.txt"
+    params:
+        gtf = config['gtf']
+    threads: 4
+    shell:
+        """
+        featureCounts -T {threads} -t exon -g gene_id -a {params.gtf} -o {output.counts_file} {input.aligned_reads}
+        """
+
+### TPM Calulation with tpmcalculator
+rule tpm_calculator:
+    input:
+        bam="aligned/{sample_id}_Aligned.sortedByCoord.out.bam",
+        gtf=config["gtf"]
+    output:
+        tpm="tpm_calculator/{sample_id}_Aligned.sortedByCoord.out_genes.out"
+    log:
+        "logs/{sample_id}_tpmcalculator.log"
+    shell:
+        """
+        if [ ! -d tpm_calculator ]
+        then
+            mkdir tpm_calculator
+        fi
+        cd tpm_calculator
+        TPMCalculator -g {input.gtf} -b ../{input.bam} -e -a > ../{log} 2>&1
+        cd ..
+        """
+
+rule create_tpm_table:
+    input:
+        tpm_files = expand("tpm_calculator/{sample_id}_Aligned.sortedByCoord.out_genes.out",sample_id=sample_id_list)
+    output:
+        tpm_table = "results/tpms.txt"
+    run:
+        import pandas as pd
+        data_dict = {}
+        sid_list = []
+        for tf in input.tpm_files:
+            sid = os.path.basename(tf).replace("_Aligned.sortedByCoord.out_genes.out","")
+            sid_list.append(sid)
+            data = pd.read_csv(tf,sep='\t')
+            genes = data['Gene_Id'].tolist()
+            tpms = data['TPM'].tolist()
+            for idx,g in enumerate(genes):
+                if g not in data_dict:
+                    data_dict[g] = {}
+                data_dict[g][sid] = tpms[idx]
+        with open(output.tpm_table,'w') as o:
+            o.write('Gene\t{}\n'.format("\t".join(sid_list)))
+            for gene in data_dict:
+                o.write(gene)
+                for sid in sid_list:
+                    if sid in data_dict[gene]:
+                        o.write(f"\t{data_dict[gene][sid]}")
+                    else:
+                        o.write("\t0")
+                o.write('\n')
+
