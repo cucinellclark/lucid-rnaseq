@@ -44,8 +44,8 @@ sub process_rnaseq
     my $ws = $app->workspace();
 
     # CLEANUP = 0 (dont delete), CLEANUP = 1 (delete)
-    my $cwd = File::Temp->newdir( CLEANUP => 0 );
-    #my $cwd = "/tmp/AmR8g5Sr7H"; # use existing folder for testing, skip steps
+    #my $cwd = File::Temp->newdir( CLEANUP => 0 );
+    my $cwd = "/tmp/ISWFscpVZu"; # use existing folder for testing, skip steps
 
     my $work_dir = "$cwd/work";
     my $stage_dir = "$cwd/stage";
