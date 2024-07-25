@@ -38,12 +38,12 @@ TPAGE_ARGS = --define kb_top=$(TARGET) --define kb_runtime=$(DEPLOY_RUNTIME) --d
 	--define kb_sphinx_port=$(SPHINX_PORT) --define kb_sphinx_host=$(SPHINX_HOST) \
 	--define kb_starman_workers=$(STARMAN_WORKERS) \
 	--define kb_starman_max_requests=$(STARMAN_MAX_REQUESTS) \
-    --define lrna_service_data=$(SERVICE_DATA)
+	--define lrna_service_data=$(SERVICE_DATA)
 
 all: bin build-libs 
 
 build-libs:
-   $(TPAGE) $(TPAGE_BUILD_ARGS) $(TPAGE_ARGS) AppConfig.pm.tt > lib/Bio/P3/LucidRNASeq/AppConfig.pm
+	$(TPAGE) $(TPAGE_BUILD_ARGS) $(TPAGE_ARGS) AppConfig.pm.tt > lib/Bio/P3/LucidRNASeq/AppConfig.pm
 
 bin: $(BIN_PERL) $(BIN_SERVICE_PERL) $(BIN_SERVICE_PYTHON)
 
@@ -62,11 +62,11 @@ deploy-service-scripts:
 	export KB_RUNTIME=$(DEPLOY_RUNTIME); \
 	export KB_PERL_PATH=$(TARGET)/lib ; \
 	for src in $(SRC_SERVICE_PERL) ; do \
-	        basefile=`basename $$src`; \
-	        base=`basename $$src .pl`; \
-	        echo install $$src $$base ; \
-	        cp $$src $(TARGET)/plbin ; \
-	        $(WRAP_PERL_SCRIPT) "$(TARGET)/plbin/$$basefile" $(TARGET)/bin/$$base ; \
+			basefile=`basename $$src`; \
+			base=`basename $$src .pl`; \
+			echo install $$src $$base ; \
+			cp $$src $(TARGET)/plbin ; \
+			$(WRAP_PERL_SCRIPT) "$(TARGET)/plbin/$$basefile" $(TARGET)/bin/$$base ; \
 	done
 
 
