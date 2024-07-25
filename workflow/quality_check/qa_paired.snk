@@ -1,0 +1,32 @@
+import re
+import os
+import json
+
+sample_id_list = []
+print(config)
+for sample_id in config['paired_end_libs']:
+    sample_id_list.append(sample_id)
+
+wildcard_constraints:
+    sample_id= '|'.join([re.escape(x) for x in sample_id_list])
+
+rule all:
+    input:
+        trim_files_1 = expand("trimmed/{sample_id}_val_1.fq.gz", sample_id=sample_id_list),
+        trim_files_2 = expand("trimmed/{sample_id}_val_2.fq.gz", sample_id=sample_id_list)
+
+rule trim_reads:
+    input:
+    output:
+        trimmed_read_1 = "trimmed/{sample_id}_val_1.fq.gz",
+        trimmed_read_2 = "trimmed/{sample_id}_val_2.fq.gz"
+    params:
+        read1 = lambda wildcards: config['paired_end_libs'][wildcards.sample_id]['read1'],
+        read2 = lambda wildcards: config['paired_end_libs'][wildcards.sample_id]['read2'],
+        sid = lambda wildcards: wildcards.sample_id
+    threads: 4
+    shell:
+        """
+        trim_galore {params.read1} {params.read2} --paired --gzip --output_dir trimmed/ -j {threads} --basename {params.sid}
+        """
+

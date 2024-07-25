@@ -136,4 +136,17 @@ sub process_rnaseq
     {
         die "prepare_config.py failed: @prep_cmd\n";
     }
+
+    my @rna_cmd = ();
+    if ($params->{recipe} eq 'lucid_star') {
+        @rna_cmd = ('lrna-star-run_rnaseq','--config',$job_config);
+    }
+    else {
+        die "Unrecognized recipe: $params->{recipe}\n";
+    }
+    my $rna_ok = run(\@rna_cmd);
+    if (!$rna_ok)
+    {
+        die "run_rnaseq.py failed: @rna_cmd\n";
+    }
 }

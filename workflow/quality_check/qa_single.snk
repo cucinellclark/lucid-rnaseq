@@ -1,0 +1,41 @@
+import re
+import os
+import json
+
+sample_id_list = []
+print(config)
+for sample_id in config['single_end_libs']:
+    sample_id_list.append(sample_id)
+
+wildcard_constraints:
+    sample_id= '|'.join([re.escape(x) for x in sample_id_list])
+
+rule all:
+    input:
+        trim_files = expand("trimmed/{sample_id}_trimmed.fastq", sample_id=sample_id_list)
+
+rule trim_reads:
+    input:
+    output:
+        trimmed_read = "trimmed/{sample_id}_trimmed.fastq"
+    params:
+        read = lambda wildcards: config['single_end_libs'][wildcards.sample_id]['read'],
+        sid = lambda wildcards: wildcards.sample_id
+    threads: 4
+    shell:
+        """
+        trim_galore {params.read} --output_dir trimmed/ -j {threads} --basename {params.sid}
+        """
+
+rule write_job_json:
+    input:
+        trimmed_reads = expand("trimmed/{sample_id}_trimmed.fastq", sample_id=sample_id_list)
+    output:
+        json_file = "job_trimmed.json"
+    run:
+        curr_config = config
+        for tr in input.trimmed_reads:
+            sid = os.path.basename(tr).replace('_trimmed.fastq','')
+            curr_config['single_end_libs'][sid]['read'] = tr
+        with open(output.json_file,'w') as o:
+            json.dump(curr_config,o)
