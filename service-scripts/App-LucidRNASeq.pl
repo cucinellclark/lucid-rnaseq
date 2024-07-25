@@ -5,7 +5,7 @@
 use Bio::KBase::AppService::AppScript;
 use Bio::KBase::AppService::AppConfig;
 use Bio::KBase::AppService::ReadSet;
-use Bio::P3::LucidVariation::AppConfig qw(lrna_service_data);
+use Bio::P3::LucidRNASeq::AppConfig qw(lrna_service_data);
 
 use strict;
 use Data::Dumper;
