@@ -20,6 +20,7 @@ reads_libs = list(config['single_end_libs'].values()) + list(config['paired_end_
 condition_dict = {}
 bam_dict = {}
 for read_obj in reads_libs:
+    print(read_obj)
     cond = read_obj['condition']
     if cond not in condition_dict:
         condition_dict[cond] = []
