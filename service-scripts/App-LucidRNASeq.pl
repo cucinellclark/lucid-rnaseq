@@ -44,8 +44,8 @@ sub process_rnaseq
     my $ws = $app->workspace();
 
     # CLEANUP = 0 (dont delete), CLEANUP = 1 (delete)
-    #my $cwd = File::Temp->newdir( CLEANUP => 0 );
-    my $cwd = "/tmp/ISWFscpVZu"; # use existing folder for testing, skip steps
+    my $cwd = File::Temp->newdir( CLEANUP => 0 );
+    #my $cwd = "/tmp/ISWFscpVZu"; # use existing folder for testing, skip steps
 
     my $work_dir = "$cwd/work";
     my $stage_dir = "$cwd/stage";
@@ -80,8 +80,6 @@ sub process_rnaseq
                     (exists($pe->{sample_id}) ? (sample_id => $pe->{sample_id}) : ()),
                     (exists($pe->{condition}) ? (condition => $pe->{condition}) : ())
                     };
-                    print "PAIRED LIB\n";
-                    warn Dumper ($pe);
                     push(@{$nparams->{paired_end_libs}}, $lib);
                 },
                   sub {
