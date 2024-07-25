@@ -75,7 +75,7 @@ reference_dict = {
 }
 
 # recipe specific
-if config['recipe'] == 'lucid_star':
+if job_data['recipe'] == 'lucid_star':
     job_data['star_index'] = os.path.join(DATA_PATH,'GRCh38_Refseq_Star')
 
 job_data = merge_jsons(job_data,reference_dict[job_data['reference_genome_id']])
