@@ -23,8 +23,9 @@ for read_obj in reads_libs:
     cond = read_obj['condition']
     if cond not in condition_dict:
         condition_dict[cond] = []
+    sample_id = read_obj['sample_id']
     condition_dict[cond].append(read_obj['sample_id'])
-    bam_file = os.path.join('aligned',f'{read_obj["sample_id"]}_Aligned.sortedByCoord.out.bam')
+    bam_file = os.path.join('aligned',f'{sample_id}_Aligned.sortedByCoord.out.bam')
     bam_dict[read_obj['sample_id']] = bam_file 
 
 data_list = []
