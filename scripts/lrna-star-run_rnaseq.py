@@ -96,12 +96,12 @@ if run_diffexp:
     try:
         if config['diffexp'] == 'deseq':
             snkfile_diff = os.path.join(workflow_dir,"deseq.snk")
-            prep_cmd = ['python',os.path.join(workflow_dir,'prepare_deseq_config.py'),'-c',config_path]
+            prep_cmd = ['python3',os.path.join(workflow_dir,'prepare_deseq_config.py'),'-c',config_path]
             print(' '.join(prep_cmd))
             subprocess.check_call(prep_cmd)
         else:
             snkfile_diff = os.path.join(workflow_dir,"cuffdiff.snk")
-            prep_cmd = ['python',os.path.join(workflow_dir,'prepare_cuffdiff_config.py'),'-c',config_path]
+            prep_cmd = ['python3',os.path.join(workflow_dir,'prepare_cuffdiff_config.py'),'-c',config_path]
             print(' '.join(prep_cmd))
             subprocess.check_call(prep_cmd)
     except Exception as e:
