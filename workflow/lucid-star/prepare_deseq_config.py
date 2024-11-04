@@ -7,7 +7,7 @@ import pandas as pd
 parser = argparse.ArgumentParser()
 
 parser.add_argument('-c','--config',required=True)
-parser.add_argument('-o','--output',default='cuffdiff_diffexp.json')
+parser.add_argument('-o','--output',default='deseq_contrasts_table.txt')
 
 args = parser.parse_args()
 
@@ -15,7 +15,11 @@ with open(args.config,'r') as i:
     config = json.load(i)
 
 contrasts = config['contrasts'] 
-reads_libs = list(config['single_end_libs'].values()) + list(config['paired_end_libs'].values())
+reads_libs = []
+if len(config['single_end_libs']) > 0:
+    reads_libs += list(config['single_end_libs'].values())
+if len(config['paired_end_libs']) > 0:
+    reads_libs += list(config['paired_end_libs'].values())
 
 condition_dict = {}
 bam_dict = {}
@@ -24,8 +28,14 @@ for read_obj in reads_libs:
     if cond not in condition_dict:
         condition_dict[cond] = []
     condition_dict[cond].append(read_obj['sample_id'])
-    bam_file = os.path.join('aligned',f'{read_obj["sample_id"]}_Aligned.sortedByCoord.out.bam')
+    #bam_file = os.path.join('aligned',f'{read_obj["sample_id"]}_Aligned.sortedByCoord.out.bam')
+    #print(read_obj)
+    #bam_file = os.path.join(read_obj['bam_dir'],f'{read_obj["sample_id"]}_Aligned.sortedByCoord.out.bam')
+    #if not os.path.exists(bam_file):
+    #    print(bam_file)
+    bam_file = 'temp'
     bam_dict[read_obj['sample_id']] = bam_file 
+
 
 data_list = []
 for pair in contrasts: 
@@ -43,4 +53,4 @@ for pair in contrasts:
 data_df = pd.DataFrame(data_list)
 data_df.columns = ['Output','Cond1','Cond2','Bams1','Bams2']
 
-data_df.to_csv('deseq_contrasts_table.txt',sep='\t',index=False)
+data_df.to_csv(f'{args.output}',sep='\t',index=False)

@@ -10,11 +10,11 @@ for sample_id in config['paired_end_libs']:
 wildcard_constraints:
     sample_id= '|'.join([re.escape(x) for x in sample_id_list])
 
+#heatmap = 'results/tpm_heatmap.png'
 rule all:
     input:
         counts_table = "results/counts_table.txt",
-        tpms_table = "results/tpms.txt",
-        heatmap = 'results/tpm_heatmap.png'
+        tpms_table = "results/tpms.txt"
 
 rule create_counts_table:
     input:

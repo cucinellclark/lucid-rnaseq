@@ -30,11 +30,24 @@ rule create_metadata_file:
         single_libs = config['single_end_libs'],
         paired_libs = config['paired_end_libs'] 
     run:
+        '''
         reads_libs = list(params.single_libs.values()) + list(params.paired_libs.values())                
         with open(output.meta_file,'w') as o:
             o.write("Sample\tCondition\n")
             for read_obj in reads_libs:
                 o.write(f"{read_obj['sample_id']}\t{read_obj['condition']}\n")
+        '''
+        counts_data = pd.read_csv('results/counts_table.txt',sep='\t',header=0)
+        table_headers = counts_data.columns.tolist()
+        table_headers = table_headers[1:len(table_headers)]
+        with open(output.meta_file,'w') as o:
+            o.write("Sample\tCondition\n") 
+            for sample in table_headers:
+                if 'd0' in sample:
+                    o.write(f'{sample}\tcontrol\n')
+                else:
+                    cond = '_'.join(sample.split('_')[1:3])
+                    o.write(f'{sample}\t{cond}\n')
 
 rule run_deseq:
     input:
@@ -54,7 +67,7 @@ rule run_deseq:
                 dds = DeseqDataSet(counts=counts,metadata=metadata,design_factors='Condition',refit_cooks=True,inference=inference)
                 dds.deseq2()
 
-                stat_res = DeseqStats(dds, inference=inference, contrast=['Condition',row['Cond1'],row['Cond2']])
+                stat_res = DeseqStats(dds, inference=inference, contrast=['Condition',row['Cond1'].replace('_','-'),row['Cond2'].replace('_','-')])
                 stat_res.summary()
                 stat_res.results_df.to_csv(output.diff_file,sep='\t')
 

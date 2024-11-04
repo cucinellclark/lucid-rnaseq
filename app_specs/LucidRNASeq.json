@@ -137,6 +137,14 @@
         "desc": "differential expression program",
         "type": "enum",
         "enum": ["cuffdiff","deseq"]
+    },
+    {
+        "id": "steps",
+        "label": "pipeline steps",
+        "required": true,
+        "allow_multiple": true,
+        "default": null,
+        "type": "string"
     }
   ]
 }

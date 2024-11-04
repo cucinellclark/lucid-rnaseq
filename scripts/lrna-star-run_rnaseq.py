@@ -39,6 +39,7 @@ if error:
     sys.exit()
 
 ### create output directory and file and change into it
+# TODO: change
 if not os.path.exists(config["output_path"]):
     print(f'Output directory {config["output_path"]} doesnt exist, exiting')
     sys.exit()
@@ -49,7 +50,7 @@ os.chdir(output_folder)
 
 ### Run alignment
 # - all output necessary for downstream programs should be put into the aligned directory
-if len(paired_end) > 0:
+if len(paired_end) > 0 and 'align' in config['steps']:
     # run paired snakemake
     try:
         snkfile = os.path.join(workflow_dir,'align_paired.snk')
@@ -63,7 +64,7 @@ if len(paired_end) > 0:
     except Exception as e:
         print(f'Error running paired snakemake:\n{e}\n')
         sys.exit()
-if len(single_end) > 0:
+if len(single_end) > 0 and 'align' in config['steps']:
     # run single snakemake
     try:
         snkfile = os.path.join(workflow_dir,'align_single.snk')
@@ -79,38 +80,40 @@ if len(single_end) > 0:
         sys.exit()
 
 ### consolidate counts
-snkfile_counts = os.path.join(workflow_dir,'abundance_table.snk')
-try:
-    cmd = ['snakemake','-s',snkfile_counts,'--configfile',config_path,'-c','1']
-    print(' '.join(cmd))
-    subprocess.check_call(cmd)
-except Exception as e:
-    print(f'Error running snakemake consolidate tables:\n{e}\n')
-    sys.exit()
-
-### Run differential expression
-run_diffexp = False
-if 'contrasts' in config and len(config['contrasts']) > 0:
-    run_diffexp = True
-if run_diffexp:
+if 'count' in config['steps']:
+    snkfile_counts = os.path.join(workflow_dir,'abundance_table.snk')
     try:
-        if config['diffexp'] == 'deseq':
-            snkfile_diff = os.path.join(workflow_dir,"deseq.snk")
-            prep_cmd = ['python3',os.path.join(workflow_dir,'prepare_deseq_config.py'),'-c',config_path]
-            print(' '.join(prep_cmd))
-            subprocess.check_call(prep_cmd)
-        else:
-            snkfile_diff = os.path.join(workflow_dir,"cuffdiff.snk")
-            prep_cmd = ['python3',os.path.join(workflow_dir,'prepare_cuffdiff_config.py'),'-c',config_path]
-            print(' '.join(prep_cmd))
-            subprocess.check_call(prep_cmd)
-    except Exception as e:
-        print(f'Error running snakemake prepare diffexp config:\n{e}\n')
-        sys.exit()
-    try:
-        cmd = ['snakemake','-s',snkfile_diff,'--configfile',config_path,'-c','4']
+        cmd = ['snakemake','-s',snkfile_counts,'--configfile',config_path,'-c','1']
         print(' '.join(cmd))
         subprocess.check_call(cmd)
     except Exception as e:
-        print(f'Error running snakemake differential expression:\n{e}\n')
+        print(f'Error running snakemake consolidate tables:\n{e}\n')
+        sys.exit()
+
+### Run differential expression
+if 'diffexp' in config['steps']:
+    if 'contrasts' in config and len(config['contrasts']) > 0:
+        try:
+            if config['diffexp'] == 'deseq':
+                snkfile_diff = os.path.join(workflow_dir,"deseq.snk")
+                prep_cmd = ['python3',os.path.join(workflow_dir,'prepare_deseq_config.py'),'-c',config_path]
+                print(' '.join(prep_cmd))
+                subprocess.check_call(prep_cmd)
+            else:
+                snkfile_diff = os.path.join(workflow_dir,"cuffdiff.snk")
+                prep_cmd = ['python3',os.path.join(workflow_dir,'prepare_cuffdiff_config.py'),'-c',config_path]
+                print(' '.join(prep_cmd))
+                subprocess.check_call(prep_cmd)
+        except Exception as e:
+            print(f'Error running snakemake prepare diffexp config:\n{e}\n')
+            sys.exit()
+        try:
+            cmd = ['snakemake','-s',snkfile_diff,'--configfile',config_path,'-c','4']
+            print(' '.join(cmd))
+            subprocess.check_call(cmd)
+        except Exception as e:
+            print(f'Error running snakemake differential expression:\n{e}\n')
+            sys.exit()
+    else:
+        print(f'Error: contrasts either doesnt exist in config or no contrasts specified')
         sys.exit()

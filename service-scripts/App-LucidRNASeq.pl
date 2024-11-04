@@ -45,7 +45,12 @@ sub process_rnaseq
 
     # CLEANUP = 0 (dont delete), CLEANUP = 1 (delete)
     my $cwd = File::Temp->newdir( CLEANUP => 0 );
-    #my $cwd = "/tmp/ISWFscpVZu"; # use existing folder for testing, skip steps
+
+    if ($raw_params->{work_directory})
+    {
+        $cwd = $raw_params->{work_directory};
+        -d $cwd or mkdir $cwd or die "Cannot mkdir $cwd: $!";
+    }
 
     my $work_dir = "$cwd/work";
     my $stage_dir = "$cwd/stage";
