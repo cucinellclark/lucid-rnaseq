@@ -23,7 +23,7 @@ rule align_reads:
         index = config['star_index'],
         read1 = lambda wildcards: config['paired_end_libs'][wildcards.sample_id]['read1'],
         read2 = lambda wildcards: config['paired_end_libs'][wildcards.sample_id]['read2']
-    threads: 4
+    threads: 12 
     shell:
         """
         STAR --runThreadN {threads} --genomeDir {params.index} --readFilesCommand zcat --readFilesIn {params.read1} {params.read2} --outSAMstrandField intronMotif --outFileNamePrefix aligned/{wildcards.sample_id}_ --outSAMtype BAM SortedByCoordinate --outReadsUnmapped Fastx 

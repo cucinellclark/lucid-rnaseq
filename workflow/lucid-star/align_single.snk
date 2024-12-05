@@ -22,7 +22,7 @@ rule align_reads:
     params:
         index = config['star_index'],
         read = lambda wildcards: config['single_end_libs'][wildcards.sample_id]['read']
-    threads: 4
+    threads: 12
     shell:
         """
         STAR --runThreadN {threads} --genomeDir {params.index} --readFilesIn {params.read} --outSAMstrandField intronMotif --outFileNamePrefix aligned/{wildcards.sample_id}_ --outSAMtype BAM SortedByCoordinate

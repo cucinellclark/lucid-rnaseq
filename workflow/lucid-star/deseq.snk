@@ -1,6 +1,17 @@
 import re
-import os
+import os,sys
 import pandas as pd
+
+new_path = "/home/ac.cucinell/miniforge3/envs/snakemake/bin/"
+os.environ["PATH"] = f"{new_path}:{os.environ['PATH']}"
+print(f'python path = {sys.executable}')
+#/home/ac.cucinell/miniforge3/envs/snakemake/lib/python3.10/site-packages/pydeseq2
+new_directory = "/home/ac.cucinell/miniforge3/envs/snakemake/lib/python3.10/site-packages/pydeseq2"
+
+# Add the directory to the Python path
+if new_directory not in sys.path:
+    sys.path.append(new_directory)
+
 from pydeseq2.dds import DeseqDataSet
 from pydeseq2.default_inference import DefaultInference
 from pydeseq2.ds import DeseqStats
@@ -16,10 +27,10 @@ wildcard_constraints:
 
 contrast_data = pd.read_csv("deseq_contrasts_table.txt",sep='\t')
 output_files = contrast_data.Output.tolist()
+print(output_files)
 
 rule all:
     input:
-        "metadata.txt",
         expand("{of}",of=output_files)
 
 rule create_metadata_file:
@@ -46,7 +57,7 @@ rule create_metadata_file:
                 if 'd0' in sample:
                     o.write(f'{sample}\tcontrol\n')
                 else:
-                    cond = '_'.join(sample.split('_')[1:3])
+                    cond = '_'.join(sample.split('_')[0:2])
                     o.write(f'{sample}\t{cond}\n')
 
 rule run_deseq:

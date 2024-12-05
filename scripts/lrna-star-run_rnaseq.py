@@ -108,7 +108,7 @@ if 'diffexp' in config['steps']:
             print(f'Error running snakemake prepare diffexp config:\n{e}\n')
             sys.exit()
         try:
-            cmd = ['snakemake','-s',snkfile_diff,'--configfile',config_path,'-c','4']
+            cmd = ['/home/ac.cucinell/miniforge3/envs/snakemake/bin/snakemake','-s',snkfile_diff,'--configfile',config_path,'-c','4']
             print(' '.join(cmd))
             subprocess.check_call(cmd)
         except Exception as e:

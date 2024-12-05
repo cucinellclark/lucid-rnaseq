@@ -23,7 +23,7 @@ rule featureCounts:
         counts_file = "results/counts_paired.txt"
     params:
         gtf = config['gtf']
-    threads: 4
+    threads: 12
     shell:
         """
         featureCounts -T {threads} -p -t exon -g gene_id -a {params.gtf} -o {output.counts_file} {input.aligned_reads}
