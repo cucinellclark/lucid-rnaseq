@@ -19,8 +19,8 @@ BIN_SERVICE_PYTHON = $(addprefix $(BIN_DIR)/,$(basename $(notdir $(SRC_SERVICE_P
 DEPLOY_SERVICE_PYTHON = $(addprefix $(SERVICE_DIR)/bin/,$(basename $(notdir $(SRC_SERVICE_PYTHON))))
 
 # set data directory path
-#SERVICE_DATA = /vol/bvbrc/production/application-backend
-SERVICE_DATA = /home/ac.cucinell/LUCID/RNASeq/Genome/
+SERVICE_DATA = /vol/bvbrc/production/application-backend/LucidRNASeq
+#SERVICE_DATA = /home/ac.cucinell/LUCID/RNASeq/Genome/
 
 SRC_SERVICE_PERL = $(wildcard service-scripts/*.pl)
 BIN_SERVICE_PERL = $(addprefix $(BIN_DIR)/,$(basename $(notdir $(SRC_SERVICE_PERL))))
